@@ -195,3 +195,52 @@ def get_post(engine, post_id):
         """), {"post_id": post_id}).fetchone()
 
         return dict(row._mapping) if row else None
+    
+def get_author_analyses(engine, author_id):
+    q = text("""
+    select summary, main_claim, topics, bias_score, confidence
+    from post_analysis pa
+    join posts p on p.id = pa.post_id
+    where p.author_id = :author_id
+    """)
+    with engine.begin() as conn:
+        return [dict(r._mapping) for r in conn.execute(q, {"author_id": author_id})]
+    
+def upsert_author_profile(engine, author_id, summary, beliefs, topics, bias):
+    from sqlalchemy import text
+    import json
+
+    q = text("""
+    insert into author_profiles (author_id, summary, beliefs, recurring_topics, bias_overview)
+    values (:author_id, :summary, :beliefs, :topics, :bias)
+    on conflict (author_id) do update set
+        summary = excluded.summary,
+        beliefs = excluded.beliefs,
+        recurring_topics = excluded.recurring_topics,
+        bias_overview = excluded.bias_overview,
+        computed_at = now();
+    """)
+
+    with engine.begin() as conn:
+        conn.execute(q, {
+            "author_id": author_id,
+            "summary": summary,
+            "beliefs": json.dumps(beliefs),
+            "topics": json.dumps(topics),
+            "bias": json.dumps(bias),
+        })
+
+
+def get_author_profile(engine, author_id):
+    from sqlalchemy import text
+
+    q = text("""
+    select summary, beliefs, recurring_topics, bias_overview, computed_at
+    from author_profiles
+    where author_id = :author_id
+    """)
+
+    with engine.begin() as conn:
+        row = conn.execute(q, {"author_id": author_id}).mappings().fetchone()
+
+    return dict(row) if row else None

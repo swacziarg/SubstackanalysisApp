@@ -5,12 +5,23 @@ import os
 from fastapi import FastAPI, Header, HTTPException
 from app.worker import run_ingestion
 from app.db.engine import get_engine
-from app.db.queries import list_author_urls, search_post_chunks, list_authors,list_posts_for_author, get_post
+from app.db.queries import list_author_urls, search_post_chunks, list_authors,list_posts_for_author, get_post, get_author_analyses,get_author_profile
 from app.ai.chat import answer_question
 from app.ai.embeddings import embed_texts
-                          
+from fastapi.middleware.cors import CORSMiddleware
+
 app = FastAPI()
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 API_KEY = os.getenv("INGEST_SECRET", "dev-secret")
 print("EXPECTED API KEY:", repr(API_KEY))
 
@@ -77,3 +88,29 @@ def read_post(post_id: int):
     if not post:
         raise HTTPException(404)
     return post
+
+@app.get("/authors/{author_id}/profile")
+def author_profile(author_id: int):
+    engine = get_engine()
+    profile = get_author_profile(engine, author_id)
+
+    if not profile:
+        return {"status": "profile_not_computed"}
+
+    return profile
+
+@app.get("/compare")
+def compare(author_a: int, author_b: int):
+    engine = get_engine()
+
+    rows_a = get_author_analyses(engine, author_a)
+    rows_b = get_author_analyses(engine, author_b)
+
+    from app.analysis.author_compare import disagreement, get_author_claims, get_author_topics, compare_topics, polarity
+
+    topics = compare_topics(get_author_topics(rows_a), get_author_topics(rows_b))
+
+    return {
+        **topics,
+        "disagreement": disagreement(get_author_claims(rows_a), get_author_claims(rows_b))
+    }
