@@ -6,7 +6,12 @@ from groq import Groq
 MODEL = os.getenv("GROQ_MODEL", "llama-3.3-70b-instruct")
 _client = Groq(api_key=os.environ["GROQ_API_KEY"])
 
-SYSTEM = """You analyze opinion articles neutrally.
+SYSTEM = """You analyze opinion articles neutrally. First determine if the article has a single coherent thesis.
+
+If not, mark article_type = "multi_topic".
+
+If yes, mark article_type = "argumentative".
+
 Return STRICT JSON ONLY with this shape:
 {
  "summary": "...",

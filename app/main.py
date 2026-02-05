@@ -5,7 +5,7 @@ import os
 from fastapi import FastAPI, Header, HTTPException
 from app.worker import run_ingestion
 from app.db.engine import get_engine
-from app.db.queries import list_author_urls, search_post_chunks
+from app.db.queries import list_author_urls, search_post_chunks, list_authors,list_posts_for_author, get_post
 from app.ai.chat import answer_question
 from app.ai.embeddings import embed_texts
                           
@@ -59,3 +59,21 @@ def ask(post_id: int, question: str):
         "answer": answer,
         "sources": contexts
     }
+
+@app.get("/authors")
+def get_authors():
+    engine = get_engine()
+    return list_authors(engine)
+
+@app.get("/authors/{author_id}/posts")
+def get_author_posts(author_id: int):
+    engine = get_engine()
+    return list_posts_for_author(engine, author_id)
+
+@app.get("/posts/{post_id}")
+def read_post(post_id: int):
+    engine = get_engine()
+    post = get_post(engine, post_id)
+    if not post:
+        raise HTTPException(404)
+    return post

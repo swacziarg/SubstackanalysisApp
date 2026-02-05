@@ -143,3 +143,55 @@ def list_author_urls(engine):
         rows = conn.execute(text("select subdomain from authors")).fetchall()
     return [f"https://{r[0]}.substack.com" for r in rows]
 
+def list_authors(engine):
+    with engine.begin() as conn:
+        rows = conn.execute(text("""
+            select id, name, subdomain
+            from authors
+            order by name
+        """))
+        return [dict(r._mapping) for r in rows]
+    
+def list_posts_for_author(engine, author_id):
+    with engine.begin() as conn:
+        rows = conn.execute(text("""
+            select
+                p.id,
+                p.title,
+                p.published_at,
+                a.summary,
+                a.bias_score,
+                a.confidence
+            from posts p
+            left join post_analysis a on a.post_id = p.id
+            where p.author_id = :author_id
+            order by p.published_at desc
+        """), {"author_id": author_id})
+
+        return [dict(r._mapping) for r in rows]
+    
+
+def get_post(engine, post_id):
+    with engine.begin() as conn:
+        row = conn.execute(text("""
+            select
+                p.id,
+                p.title,
+                p.url,
+                c.clean_text,
+                a.summary,
+                a.main_claim,
+                a.bias_score,
+                a.confidence,
+                a.arguments_for,
+                a.arguments_against,
+                a.notable_quotes,
+                a.topics,
+                a.entities
+            from posts p
+            left join post_contents c on c.post_id = p.id
+            left join post_analysis a on a.post_id = p.id
+            where p.id = :post_id
+        """), {"post_id": post_id}).fetchone()
+
+        return dict(row._mapping) if row else None
