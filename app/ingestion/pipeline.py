@@ -8,7 +8,7 @@ from app.db.queries import (
     should_skip_processing,
     upsert_post_content,
     replace_chunks,
-    upsert_analysis,
+    insert_analysis,
     set_post_processed,
     get_author_analyses,
     upsert_author_profile,
@@ -107,8 +107,8 @@ def ingest_author(engine: Engine, newsletter_url: str, limit_posts: int = 10):
         embeddings = embed_texts(chunks)
         replace_chunks(engine, post_id, chunks, embeddings)
 
-        analysis = analyze_article(clean)
-        upsert_analysis(engine, post_id, analysis)
+        analysis, model, phash = analyze_article(clean)
+        insert_analysis(engine, post_id, analysis, model, phash)
 
         set_post_processed(engine, post_id, checksum)
         processed += 1

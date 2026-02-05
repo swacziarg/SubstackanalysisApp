@@ -1,10 +1,14 @@
-import json
 import os
+import re
+import json
+import hashlib
 from groq import Groq
 
-
+PROMPT_VERSION = "v1"
 MODEL = os.getenv("GROQ_MODEL", "llama-3.3-70b-instruct")
+
 _client = Groq(api_key=os.environ["GROQ_API_KEY"])
+
 
 SYSTEM = """You analyze opinion articles neutrally. First determine if the article has a single coherent thesis.
 
@@ -27,38 +31,24 @@ Return STRICT JSON ONLY with this shape:
 No markdown. No extra keys.
 """
 
-import re
-import json
+
+# ---------- JSON extraction ----------
 
 def extract_json(text: str) -> dict:
-    """
-    Attempts to safely extract JSON object from LLM output.
-    """
-
-    # 1) find first {...} block
     match = re.search(r"\{.*\}", text, re.DOTALL)
     if not match:
         raise ValueError("No JSON object found in LLM output")
 
     raw = match.group(0)
 
-    # 2) remove trailing commas
+    # remove trailing commas
     raw = re.sub(r",\s*}", "}", raw)
     raw = re.sub(r",\s*]", "]", raw)
 
-    # 3) try parse
-    try:
-        return json.loads(raw)
-    except json.JSONDecodeError:
-        print("BAD JSON FROM MODEL:\n", raw[:1000])
-        raise
+    return json.loads(raw)
+
 
 def repair_json(bad_output: str) -> dict:
-    """
-    Ask the model to convert its previous answer into strict JSON.
-    Very cheap + extremely reliable.
-    """
-
     repair_prompt = f"""
 Convert the following text into VALID JSON.
 
@@ -90,11 +80,39 @@ TEXT:
     fixed = resp.choices[0].message.content.strip()
     return extract_json(fixed)
 
-def analyze_article(clean_text: str) -> dict:
-    # Keep token usage sane: analyze only the first ~12k chars + last ~4k chars
+
+# ---------- Stable hash ----------
+
+def compute_prompt_hash(payload: str) -> str:
+    """
+    Hash must depend ONLY on:
+    - prompt version
+    - system prompt
+    - analyzed text (trimmed deterministically)
+    - model
+    """
+    h = hashlib.sha256()
+    h.update(PROMPT_VERSION.encode())
+    h.update(MODEL.encode())
+    h.update(SYSTEM.encode())
+    h.update(payload.encode())
+    return h.hexdigest()
+
+
+# ---------- Main analysis ----------
+
+def analyze_article(clean_text: str):
+    """
+    Returns:
+        analysis_dict, model_name, prompt_hash
+    """
+
+    # deterministic truncation
     head = clean_text[:12000]
     tail = clean_text[-4000:] if len(clean_text) > 16000 else ""
     payload = head + ("\n\n[...]\n\n" + tail if tail else "")
+
+    prompt_hash = compute_prompt_hash(payload)
 
     resp = _client.chat.completions.create(
         model=MODEL,
@@ -104,10 +122,13 @@ def analyze_article(clean_text: str) -> dict:
             {"role": "user", "content": payload}
         ]
     )
+
     content = resp.choices[0].message.content.strip()
 
     try:
-        return extract_json(content)
+        analysis = extract_json(content)
     except Exception:
         print("Attempting JSON repair...")
-        return repair_json(content)
+        analysis = repair_json(content)
+
+    return analysis, MODEL, prompt_hash

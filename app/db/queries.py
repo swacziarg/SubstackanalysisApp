@@ -99,28 +99,22 @@ def replace_chunks(engine: Engine, post_id: int, chunks: list[str], embeddings: 
                 "embedding": e,  # SQLAlchemy will pass list -> text; cast handles it
             })
 
-def upsert_analysis(engine, post_id: int, analysis: dict):
+def insert_analysis(engine, post_id: int, analysis: dict, model: str, prompt_hash: str):
+    from sqlalchemy import text
+    import json
 
     q = text("""
     insert into post_analysis (
       post_id, summary, main_claim, bias_score, confidence,
-      arguments_for, arguments_against, notable_quotes, topics, entities
+      arguments_for, arguments_against, notable_quotes, topics, entities,
+      model, prompt_hash
     )
     values (
       :post_id, :summary, :main_claim, :bias_score, :confidence,
-      :arguments_for, :arguments_against, :notable_quotes, :topics, :entities
+      :arguments_for, :arguments_against, :notable_quotes, :topics, :entities,
+      :model, :prompt_hash
     )
-    on conflict (post_id) do update set
-      summary = excluded.summary,
-      main_claim = excluded.main_claim,
-      bias_score = excluded.bias_score,
-      confidence = excluded.confidence,
-      arguments_for = excluded.arguments_for,
-      arguments_against = excluded.arguments_against,
-      notable_quotes = excluded.notable_quotes,
-      topics = excluded.topics,
-      entities = excluded.entities,
-      created_at = now();
+    on conflict (post_id, prompt_hash) do nothing;
     """)
 
     with engine.begin() as conn:
@@ -135,6 +129,8 @@ def upsert_analysis(engine, post_id: int, analysis: dict):
             "notable_quotes": json.dumps(analysis.get("notable_quotes", [])),
             "topics": json.dumps(analysis.get("topics", [])),
             "entities": json.dumps(analysis.get("entities", [])),
+            "model": model,
+            "prompt_hash": prompt_hash,
         })
 
 def list_author_urls(engine):
@@ -172,6 +168,8 @@ def list_posts_for_author(engine, author_id):
     
 
 def get_post(engine, post_id):
+    from sqlalchemy import text
+
     with engine.begin() as conn:
         row = conn.execute(text("""
             select
@@ -190,19 +188,34 @@ def get_post(engine, post_id):
                 a.entities
             from posts p
             left join post_contents c on c.post_id = p.id
-            left join post_analysis a on a.post_id = p.id
+            left join lateral (
+                select *
+                from post_analysis pa
+                where pa.post_id = p.id
+                order by pa.analyzed_at desc
+                limit 1
+            ) a on true
             where p.id = :post_id
         """), {"post_id": post_id}).fetchone()
 
         return dict(row._mapping) if row else None
     
 def get_author_analyses(engine, author_id):
+    from sqlalchemy import text
+
     q = text("""
-    select summary, main_claim, topics, bias_score, confidence
+    select distinct on (p.id)
+        pa.summary,
+        pa.main_claim,
+        pa.topics,
+        pa.bias_score,
+        pa.confidence
     from post_analysis pa
     join posts p on p.id = pa.post_id
     where p.author_id = :author_id
+    order by p.id, pa.analyzed_at desc
     """)
+
     with engine.begin() as conn:
         return [dict(r._mapping) for r in conn.execute(q, {"author_id": author_id})]
     
@@ -230,9 +243,9 @@ def upsert_author_profile(engine, author_id, summary, beliefs, topics, bias):
             "bias": json.dumps(bias),
         })
 
-
 def get_author_profile(engine, author_id):
     from sqlalchemy import text
+    import json
 
     q = text("""
     select summary, beliefs, recurring_topics, bias_overview, computed_at
@@ -243,4 +256,17 @@ def get_author_profile(engine, author_id):
     with engine.begin() as conn:
         row = conn.execute(q, {"author_id": author_id}).mappings().fetchone()
 
-    return dict(row) if row else None
+    if not row:
+        return None
+
+    row = dict(row)
+
+    # Deserialize JSONB fields (important)
+    for field in ("beliefs", "recurring_topics", "bias_overview"):
+        if isinstance(row.get(field), str):
+            try:
+                row[field] = json.loads(row[field])
+            except Exception:
+                row[field] = None
+
+    return row
