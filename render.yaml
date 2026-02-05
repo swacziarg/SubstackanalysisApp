@@ -1,0 +1,16 @@
+services:
+  - type: worker
+    name: substack-worker
+    env: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: python -m app.worker
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: GROQ_API_KEY
+        sync: false
+      - key: INGEST_TARGETS
+        sync: false
+      - key: INGEST_LIMIT
+        value: "10"
