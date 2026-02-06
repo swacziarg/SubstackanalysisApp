@@ -223,12 +223,14 @@ def list_posts_for_author(engine, author_id):
 
         return [dict(r._mapping) for r in rows]
 
+
 def get_post(engine, post_id):
     from sqlalchemy import text
 
     with engine.begin() as conn:
-        row = conn.execute(
-            text("""
+        row = (
+            conn.execute(
+                text("""
             select
                 p.id,
                 p.title,
@@ -255,8 +257,11 @@ def get_post(engine, post_id):
             ) a on true
             where p.id = :post_id
         """),
-            {"post_id": post_id},
-        ).mappings().first()
+                {"post_id": post_id},
+            )
+            .mappings()
+            .first()
+        )
 
     if not row:
         return None
@@ -265,8 +270,8 @@ def get_post(engine, post_id):
         "id": row["id"],
         "title": row["title"],
         "url": row["url"],
-        "html": row["raw_html"],          # ← NEW
-        "text": row["clean_text"],        # ← keep for embeddings/debug
+        "html": row["raw_html"],  # ← NEW
+        "text": row["clean_text"],  # ← keep for embeddings/debug
         "analysis": {
             "summary": row["summary"],
             "main_claim": row["main_claim"],

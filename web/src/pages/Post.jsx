@@ -19,8 +19,8 @@ export default function Post() {
   async function ask() {
     setLoading(true);
     const res = await api.post(
-    `/posts/${id}/ask`,
-    { question }   // JSON body
+      `/posts/${id}/ask`,
+      { question }, // JSON body
     );
     setAnswer(res.data);
     setLoading(false);
@@ -45,8 +45,12 @@ export default function Post() {
       {/* AI Panel */}
       <div style={{ width: "40%" }}>
         <h2>AI Analysis</h2>
-        <p><b>Main claim:</b> {post.analysis?.main_claim}</p>
-        <p><b>Bias:</b> {post.analysis?.bias}</p>
+        <p>
+          <b>Main claim:</b> {post.analysis?.main_claim}
+        </p>
+        <p>
+          <b>Bias:</b> {post.analysis?.bias}
+        </p>
 
         <hr />
 

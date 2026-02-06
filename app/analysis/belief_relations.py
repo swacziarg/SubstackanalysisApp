@@ -22,6 +22,7 @@ Belief B:
 {b}
 """
 
+
 def classify_relation(a, b):
     r = client.chat.completions.create(
         model=os.getenv("GROQ_MODEL"),
@@ -39,6 +40,7 @@ def classify_relation(a, b):
         }
     except:
         return {"relation": "UNRELATED", "confidence": 0.5}
+
 
 def build_relations(engine, author_id):
 

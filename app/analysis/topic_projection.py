@@ -1,6 +1,7 @@
 import numpy as np
 
 from app.ai.model_store import get_embedding_model
+
 _model = get_embedding_model()
 
 # anchor domains — shared intellectual space

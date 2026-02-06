@@ -1,5 +1,6 @@
 from bs4 import BeautifulSoup
 
+
 def extract_title_from_html(html: str) -> str | None:
     if not html:
         return None

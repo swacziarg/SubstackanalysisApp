@@ -23,6 +23,7 @@ from app.analysis.claim_extractor import extract_claims
 from app.analysis.author_profile import aggregate_topics, bias_stats, recurring_claims
 from bs4 import BeautifulSoup
 
+
 def extract_title_from_html(html: str, fallback: str | None):
     soup = BeautifulSoup(html, "html.parser")
 
@@ -35,6 +36,7 @@ def extract_title_from_html(html: str, fallback: str | None):
         return h1.get_text(strip=True)
 
     return fallback or "Untitled"
+
 
 def sha256_text(s: str) -> str:
     return hashlib.sha256(s.encode("utf-8")).hexdigest()
@@ -51,7 +53,9 @@ def ingest_author(engine: Engine, newsletter_url: str, limit_posts: int = 10):
     subdomain = parse_subdomain(newsletter_url)
 
     # Substack API doesn’t always provide author nicely; use subdomain as fallback
-    author_id = upsert_author(engine, subdomain=subdomain, name=subdomain, description=None)
+    author_id = upsert_author(
+        engine, subdomain=subdomain, name=subdomain, description=None
+    )
 
     posts = client.get_posts(limit=limit_posts)
 
@@ -75,14 +79,18 @@ def ingest_author(engine: Engine, newsletter_url: str, limit_posts: int = 10):
             # Normalize published_at
             if isinstance(published_at, str):
                 try:
-                    published_at = datetime.fromisoformat(published_at.replace("Z", "+00:00"))
+                    published_at = datetime.fromisoformat(
+                        published_at.replace("Z", "+00:00")
+                    )
                 except Exception:
                     published_at = None
 
             # ---- Title: prefer metadata JSON endpoint (works even if HTML is paywalled) ----
             title = None
             try:
-                meta = client.get_post_metadata(url)  # you add this method to SubstackClient
+                meta = client.get_post_metadata(
+                    url
+                )  # you add this method to SubstackClient
                 meta_title = meta.get("title")
                 if isinstance(meta_title, str) and meta_title.strip():
                     title = meta_title.strip()

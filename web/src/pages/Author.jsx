@@ -12,6 +12,10 @@ export default function Author() {
 
   return (
     <div style={{ padding: 40, maxWidth: 900, margin: "auto" }}>
+      <Link to={`/`}>← Back to all authors</Link>
+      <div></div>
+      <Link to={`/authors/${id}/profile`}>View author belief profile</Link>
+
       <h1>Posts</h1>
 
       {posts.map((p) => (
@@ -26,10 +30,6 @@ export default function Author() {
         >
           <Link to={`/posts/${p.id}`}>
             <h2 style={{ marginBottom: 6 }}>{p.title || "Untitled"}</h2>
-          </Link>
-
-          <Link to={`/authors/${id}/profile`}>
-            View belief profile
           </Link>
 
           <div style={{ marginTop: 8, color: "#666" }}>

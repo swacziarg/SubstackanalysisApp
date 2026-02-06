@@ -10,6 +10,7 @@ def aggregate_topics(rows):
 
     return [t for t, _ in counter.most_common(8)]
 
+
 def bias_stats(rows):
     scores = [r["bias_score"] for r in rows if r["bias_score"] is not None]
     confs = [r["confidence"] for r in rows if r["confidence"] is not None]

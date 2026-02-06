@@ -1,11 +1,12 @@
 from app.utils.json_utils import ensure_list
 
+
 def get_author_claims(rows):
     return [r["main_claim"] for r in rows if r.get("main_claim")]
-from app.utils.json_utils import ensure_list
-from app.analysis.topic_normalizer import normalize_topics
+
 
 from app.analysis.topic_projection import project_to_domains
+
 
 def get_author_topics(rows):
     raw = []
@@ -14,10 +15,13 @@ def get_author_topics(rows):
 
     return project_to_domains(raw)
 
+
 import numpy as np
 
 from app.ai.model_store import get_embedding_model
+
 _model = get_embedding_model()
+
 
 def _cosine_matrix(a: np.ndarray, b: np.ndarray) -> np.ndarray:
     a = a / (np.linalg.norm(a, axis=1, keepdims=True) + 1e-12)
@@ -73,12 +77,14 @@ def compare_topics(a_topics: set[str], b_topics: set[str], threshold: float = 0.
         b_t = b_list[j]
         canonical = a_t if len(a_t) <= len(b_t) else b_t
 
-        pairs.append({
-            "canonical": canonical,
-            "a": a_t,
-            "b": b_t,
-            "similarity": round(sim, 3),
-        })
+        pairs.append(
+            {
+                "canonical": canonical,
+                "a": a_t,
+                "b": b_t,
+                "similarity": round(sim, 3),
+            }
+        )
 
     unique_a = [a_list[i] for i in range(len(a_list)) if i not in used_a]
     unique_b = [b_list[j] for j in range(len(b_list)) if j not in used_b]

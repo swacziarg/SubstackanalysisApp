@@ -40,7 +40,7 @@ def build_author_beliefs(engine, author_id):
 
     groups = []
     used = set()
-    THRESH = 0.72   # belief similarity threshold
+    THRESH = 0.72  # belief similarity threshold
 
     for i in range(len(rows)):
         if i in used:

@@ -1,5 +1,6 @@
 import json
 
+
 def ensure_list(value):
     """
     Accepts:

@@ -31,10 +31,7 @@ def normalize_topics(topics: list[str]) -> set[str]:
                 break
 
         if not placed:
-            clusters.append({
-                "embedding": emb,
-                "items": [topic]
-            })
+            clusters.append({"embedding": emb, "items": [topic]})
 
     # choose shortest phrase as canonical
     canonical = set(min(c["items"], key=len) for c in clusters)
