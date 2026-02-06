@@ -387,12 +387,18 @@ def get_author_profile(engine, author_id):
         }
 
     tensions = get_author_tensions(engine, author_id)
+    from app.analysis.author_summary import build_author_summary
+
+    belief_texts = [b["canonical_claim"] for b in beliefs[:12]]
+    topics = [t for t, _ in topic_counter.most_common(8)]
+
+    summary = build_author_summary(belief_texts, topics, bias)
 
     return {
-        "summary": beliefs[0]["canonical_claim"],
-        "beliefs": [b["canonical_claim"] for b in beliefs[:12]],
+        "summary": summary,
+        "beliefs": belief_texts,
         "tensions": tensions[:8],
-        "recurring_topics": [t for t, _ in topic_counter.most_common(8)],
+        "recurring_topics": topics,
         "bias_overview": bias,
     }
 

@@ -5,18 +5,19 @@ def get_author_claims(rows):
 from app.utils.json_utils import ensure_list
 from app.analysis.topic_normalizer import normalize_topics
 
+from app.analysis.topic_projection import project_to_domains
+
 def get_author_topics(rows):
     raw = []
     for r in rows:
         raw.extend(ensure_list(r.get("topics")))
 
-    return normalize_topics(raw)
+    return project_to_domains(raw)
 
-from sentence_transformers import SentenceTransformer
 import numpy as np
 
-_model = SentenceTransformer("all-MiniLM-L6-v2")
-
+from app.ai.model_store import get_embedding_model
+_model = get_embedding_model()
 
 def _cosine_matrix(a: np.ndarray, b: np.ndarray) -> np.ndarray:
     a = a / (np.linalg.norm(a, axis=1, keepdims=True) + 1e-12)
@@ -24,7 +25,7 @@ def _cosine_matrix(a: np.ndarray, b: np.ndarray) -> np.ndarray:
     return a @ b.T
 
 
-def compare_topics(a_topics: set[str], b_topics: set[str], threshold: float = 0.78):
+def compare_topics(a_topics: set[str], b_topics: set[str], threshold: float = 0.70):
     """
     Semantic compare:
     - agreement: pairs of topics that are semantically the same

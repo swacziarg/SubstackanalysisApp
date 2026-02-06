@@ -1,8 +1,6 @@
-from sentence_transformers import SentenceTransformer
 
-# Small, fast, free, 384-dim vectors
-_model = SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2")
-
+from app.ai.model_store import get_embedding_model
+_model = get_embedding_model()
 
 def embed_texts(texts: list[str]) -> list[list[float]]:
     vecs = _model.encode(texts, normalize_embeddings=True)
