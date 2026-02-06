@@ -1,19 +1,19 @@
 import { useEffect, useState } from "react";
-import { api } from "../api";
 import { Link, useParams } from "react-router-dom";
+import { getPostsCached } from "../api";
 
 export default function Author() {
   const { id } = useParams();
   const [posts, setPosts] = useState([]);
 
   useEffect(() => {
-    api.get(`/authors/${id}/posts`).then((res) => setPosts(res.data));
+    getPostsCached(id).then(setPosts);
   }, [id]);
 
   return (
     <div style={{ padding: 40, maxWidth: 900, margin: "auto" }}>
       <Link to={`/`}>← Back to all authors</Link>
-      <div></div>
+      <div />
       <Link to={`/authors/${id}/profile`}>View author belief profile</Link>
 
       <h1>Posts</h1>

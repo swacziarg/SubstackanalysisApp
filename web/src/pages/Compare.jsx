@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
-import { compareAuthors } from "../api";
-import { api } from "../api";
+import { compareAuthors, getAuthorsCached } from "../api";
 
 export default function Compare() {
   const [authors, setAuthors] = useState([]);
@@ -9,7 +8,7 @@ export default function Compare() {
   const [result, setResult] = useState(null);
 
   useEffect(() => {
-    api.get("/authors").then((r) => setAuthors(r.data));
+    getAuthorsCached().then(setAuthors);
   }, []);
 
   const run = async () => {

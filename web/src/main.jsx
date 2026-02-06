@@ -8,9 +8,10 @@ import Post from "./pages/Post.jsx";
 import Compare from "./pages/Compare.jsx";
 import AuthorProfile from "./pages/AuthorProfile.jsx";
 import Profile from "./pages/Profile.jsx";
+import { startBackgroundWarm } from "./preload";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
-  <BrowserRouter>
+  <BrowserRouter future={{ v7_startTransition: true }}>
     <Routes>
       <Route path="/" element={<Authors />} />
       <Route path="/authors/:id" element={<Author />} />
@@ -20,3 +21,6 @@ ReactDOM.createRoot(document.getElementById("root")).render(
     </Routes>
   </BrowserRouter>,
 );
+
+// start warming AFTER UI exists
+startBackgroundWarm();

@@ -1,13 +1,15 @@
 import { useEffect, useState } from "react";
-import { api } from "../api";
 import { Link } from "react-router-dom";
-
+import { getAuthorsCached } from "../api";
+import { startBackgroundWarm } from "../preload";
 export default function Authors() {
   const [authors, setAuthors] = useState([]);
-
-  useEffect(() => {
-    api.get("/authors").then((res) => setAuthors(res.data));
-  }, []);
+    useEffect(() => {
+    getAuthorsCached().then((a) => {
+        setAuthors(a);
+        startBackgroundWarm(); // ensures warm even if user lands deep link
+    });
+    }, []);
 
   return (
     <div style={{ padding: 40 }}>
@@ -20,6 +22,7 @@ export default function Authors() {
           </Link>
         </div>
       ))}
+
       <Link to="/compare">Compare thinkers</Link>
     </div>
   );

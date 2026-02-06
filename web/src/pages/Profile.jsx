@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { api } from "../api";
+import { getProfileCached, api } from "../api";
 
 export default function Profile() {
   const { authorId } = useParams();
@@ -8,25 +8,22 @@ export default function Profile() {
   const [question, setQuestion] = useState("");
   const [messages, setMessages] = useState([]);
   const [loadingAsk, setLoadingAsk] = useState(false);
+
   useEffect(() => {
-    api
-      .get(`/authors/${authorId}/profile`)
-      .then((res) => setData(res.data))
+    getProfileCached(authorId)
+      .then(setData)
       .catch(() => setData({ error: true }));
   }, [authorId]);
+
   const askAuthor = async () => {
     if (!question.trim()) return;
 
     setLoadingAsk(true);
-
-    const userMsg = { role: "user", text: question };
-    setMessages((m) => [...m, userMsg]);
+    setMessages((m) => [...m, { role: "user", text: question }]);
 
     try {
       const res = await api.post(`/authors/${authorId}/ask`, { question });
-
       setMessages((m) => [...m, { role: "assistant", text: res.data.answer }]);
-
       setQuestion("");
     } catch {
       setMessages((m) => [
@@ -37,6 +34,7 @@ export default function Profile() {
 
     setLoadingAsk(false);
   };
+
   if (!data) return <div>Loading belief profile...</div>;
   if (data.error) return <div>Failed to load profile.</div>;
 
@@ -75,24 +73,7 @@ export default function Profile() {
         <h2>Bias Overview</h2>
         <pre>{JSON.stringify(data.bias_overview, null, 2)}</pre>
       </section>
-      <section>
-        <h2>Internal Tensions</h2>
-        {data.tensions?.length ? (
-          <ul>
-            {data.tensions.map((t, i) => (
-              <li key={i}>
-                <b>{t.belief_a}</b>
-                <br />
-                contradicts
-                <br />
-                <b>{t.belief_b}</b>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p>No major contradictions detected.</p>
-        )}
-      </section>
+
       <section style={{ marginTop: 40 }}>
         <h2>Ask this Author</h2>
 
@@ -125,7 +106,6 @@ export default function Profile() {
               </div>
             </div>
           ))}
-
           {loadingAsk && <div>Thinking...</div>}
         </div>
 
@@ -137,7 +117,6 @@ export default function Profile() {
             style={{ flex: 1, padding: 10 }}
             onKeyDown={(e) => e.key === "Enter" && askAuthor()}
           />
-
           <button onClick={askAuthor}>Ask</button>
         </div>
       </section>

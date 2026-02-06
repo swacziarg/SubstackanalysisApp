@@ -1,13 +1,13 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { getAuthorProfile } from "../api";
+import { getProfileCached } from "../api";
 
 export default function AuthorProfile() {
   const { id } = useParams();
   const [data, setData] = useState(null);
 
   useEffect(() => {
-    getAuthorProfile(id).then((r) => setData(r.data));
+    getProfileCached(id).then(setData);
   }, [id]);
 
   if (!data) return <div>Loading...</div>;

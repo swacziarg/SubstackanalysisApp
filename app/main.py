@@ -19,6 +19,8 @@ from app.ai.chat import answer_question
 from app.ai.embeddings import embed_texts
 from fastapi.middleware.cors import CORSMiddleware
 from app.analysis.backfill_beliefs import backfill_author_beliefs
+from app.db.cached_profiles import upsert_cached_profile
+from app.db.queries import get_author_profile
 
 app = FastAPI()
 
@@ -108,17 +110,17 @@ def read_post(post_id: int):
         raise HTTPException(404)
     return post
 
+from app.db.cached_profiles import get_cached_profile
 
 @app.get("/authors/{author_id}/profile")
 def author_profile(author_id: int):
     engine = get_engine()
-    profile = get_author_profile(engine, author_id)
 
-    if not profile:
-        return {"status": "profile_not_computed"}
+    cached = get_cached_profile(engine, author_id)
+    if cached:
+        return cached
 
-    return profile
-
+    return {"status": "profile_not_computed"}
 
 @app.get("/compare")
 def compare(author_a: int, author_b: int):
@@ -173,13 +175,18 @@ def classify_claims():
 
     return classify_missing_claims(engine)
 
-
 @app.post("/admin/build_relations/{author_id}")
 def build_relations_api(author_id: int):
     engine = get_engine()
     from app.analysis.belief_relations import build_relations
 
-    return build_relations(engine, author_id)
+    result = build_relations(engine, author_id)
+
+    profile = get_author_profile(engine, author_id)
+    if profile:
+        upsert_cached_profile(engine, author_id, profile)
+
+    return result
 
 
 @app.get("/authors/{author_id}/evolution")
