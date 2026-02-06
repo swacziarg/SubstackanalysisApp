@@ -47,11 +47,20 @@ export default function Compare() {
       {result && (
         <div style={{ marginTop: 30 }}>
           <h2>Agreement</h2>
-          <ul>
+            <ul>
             {result.agreement?.map((x, i) => (
-              <li key={i}>{x}</li>
+                <li key={i}>
+                <b>{x.canonical}</b>
+                <div style={{ color: "#666", marginTop: 4 }}>
+                    A: {x.a}
+                    <br />
+                    B: {x.b}
+                    <br />
+                    sim: {x.similarity}
+                </div>
+                </li>
             ))}
-          </ul>
+            </ul>
 
           <h2>Disagreement</h2>
           <ul>

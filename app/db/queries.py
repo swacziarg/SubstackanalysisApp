@@ -55,7 +55,11 @@ def upsert_post_shell(
     insert into posts (author_id, title, url, published_at, slug, word_count)
     values (:author_id, :title, :url, :published_at, :slug, :word_count)
     on conflict (url) do update
-    set title = excluded.title,
+    set title = CASE
+            WHEN posts.title IS NULL OR posts.title = 'Untitled'
+            THEN excluded.title
+            ELSE posts.title
+        END,
         published_at = excluded.published_at,
         slug = coalesce(excluded.slug, posts.slug),
         word_count = coalesce(excluded.word_count, posts.word_count)
@@ -199,19 +203,25 @@ def list_posts_for_author(engine, author_id):
                 p.id,
                 p.title,
                 p.published_at,
-                a.summary,
-                a.bias_score,
-                a.confidence
+                pa.summary,
+                pa.main_claim,
+                pa.bias_score,
+                pa.confidence
             from posts p
-            left join post_analysis a on a.post_id = p.id
+            left join lateral (
+                select *
+                from post_analysis pa
+                where pa.post_id = p.id
+                order by pa.analyzed_at desc
+                limit 1
+            ) pa on true
             where p.author_id = :author_id
-            order by p.published_at desc
+            order by p.published_at desc nulls last
         """),
             {"author_id": author_id},
         )
 
         return [dict(r._mapping) for r in rows]
-
 
 def get_post(engine, post_id):
     from sqlalchemy import text

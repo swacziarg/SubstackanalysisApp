@@ -19,7 +19,8 @@ export default function Post() {
   async function ask() {
     setLoading(true);
     const res = await api.post(
-      `/posts/${id}/ask?question=${encodeURIComponent(question)}`
+    `/posts/${id}/ask`,
+    { question }   // JSON body
     );
     setAnswer(res.data);
     setLoading(false);

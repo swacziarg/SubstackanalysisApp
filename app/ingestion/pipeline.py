@@ -51,9 +51,7 @@ def ingest_author(engine: Engine, newsletter_url: str, limit_posts: int = 10):
     subdomain = parse_subdomain(newsletter_url)
 
     # Substack API doesn’t always provide author nicely; use subdomain as fallback
-    author_id = upsert_author(
-        engine, subdomain=subdomain, name=subdomain, description=None
-    )
+    author_id = upsert_author(engine, subdomain=subdomain, name=subdomain, description=None)
 
     posts = client.get_posts(limit=limit_posts)
 
@@ -61,82 +59,134 @@ def ingest_author(engine: Engine, newsletter_url: str, limit_posts: int = 10):
     skipped_paywall = 0
     skipped_empty = 0
     skipped_unchanged = 0
+    skipped_no_url = 0
+    errors = 0
 
     for p in posts:
-        # Defensive: library objects vary; grab what exists
-        title = getattr(p, "title", None) or "Untitled"
-        url = getattr(p, "url", None)
-        published_at = getattr(p, "post_date", None)
-        slug = getattr(p, "slug", None)
+        try:
+            url = getattr(p, "url", None)
+            slug = getattr(p, "slug", None)
+            published_at = getattr(p, "post_date", None)
 
-        if not url:
-            continue
+            if not url:
+                skipped_no_url += 1
+                continue
 
-        # Normalize published_at
-        if isinstance(published_at, str):
+            # Normalize published_at
+            if isinstance(published_at, str):
+                try:
+                    published_at = datetime.fromisoformat(published_at.replace("Z", "+00:00"))
+                except Exception:
+                    published_at = None
+
+            # ---- Title: prefer metadata JSON endpoint (works even if HTML is paywalled) ----
+            title = None
             try:
-                published_at = datetime.fromisoformat(
-                    published_at.replace("Z", "+00:00")
-                )
-            except Exception:
-                published_at = None
+                meta = client.get_post_metadata(url)  # you add this method to SubstackClient
+                meta_title = meta.get("title")
+                if isinstance(meta_title, str) and meta_title.strip():
+                    title = meta_title.strip()
+            except Exception as e:
+                # don’t fail ingestion just because metadata failed
+                print(f"[warn] metadata fetch failed for {url}: {e}")
 
-        html = client.get_post_html(url)
+            # absolute fallback to avoid NOT NULL title errors
+            if not title:
+                title = (slug or "Untitled").replace("-", " ").title()
 
-        title = extract_title_from_html(html, title)
+            # ---- Upsert shell early (title is always non-null now) ----
+            shell = upsert_post_shell(
+                engine,
+                author_id=author_id,
+                title=title,
+                url=url,
+                published_at=published_at,
+                slug=slug,
+                word_count=None,
+            )
+            post_id = shell["id"]
 
-        shell = upsert_post_shell(
-            engine,
-            author_id=author_id,
-            title=title,
-            url=url,
-            published_at=published_at,
-            slug=slug,
-            word_count=None,
-        )
-        post_id = shell["id"]
+            # ---- Fetch HTML for content/analysis ----
+            html = client.get_post_html(url)
 
-        # Paywalled or unavailable
-        if not html or "paywalled" in str(html).lower():
-            skipped_paywall += 1
-            print(f"Skipping paywalled post: {title}")
-            continue
+            # Paywalled or unavailable: we keep the shell/title but skip content processing
+            if not html or "paywalled" in str(html).lower():
+                skipped_paywall += 1
+                print(f"Skipping paywalled post: {title}")
+                continue
 
-        clean = html_to_text(html)
+            clean = html_to_text(html)
 
-        if not clean.strip():
-            skipped_empty += 1
-            print(f"Skipping empty post: {title}")
-            continue
+            if not clean.strip():
+                skipped_empty += 1
+                print(f"Skipping empty post: {title}")
+                continue
 
-        checksum = sha256_text(clean)
+            checksum = sha256_text(clean)
 
-        if should_skip_processing(engine, post_id, checksum):
-            skipped_unchanged += 1
-            continue
+            if should_skip_processing(engine, post_id, checksum):
+                skipped_unchanged += 1
+                continue
 
-        upsert_post_content(engine, post_id, raw_html=html, clean_text=clean)
+            upsert_post_content(engine, post_id, raw_html=html, clean_text=clean)
 
-        chunks = chunk_text(clean)
-        if not chunks:
-            # still mark processed so we don't loop forever
+            chunks = chunk_text(clean)
+            if not chunks:
+                set_post_processed(engine, post_id, checksum)
+                processed += 1
+                continue
+
+            embeddings = embed_texts(chunks)
+            replace_chunks(engine, post_id, chunks, embeddings)
+
+            # analyze once (you had this duplicated before)
+            analysis, model, phash = analyze_article(clean)
+            insert_analysis(engine, post_id, analysis, model, phash)
+
+            claims = extract_claims(analysis)
+            insert_belief_occurrences(engine, author_id, post_id, published_at, claims)
+
             set_post_processed(engine, post_id, checksum)
             processed += 1
-            continue
 
-        embeddings = embed_texts(chunks)
-        replace_chunks(engine, post_id, chunks, embeddings)
+            # optional debug prints
+            # print("RAW POST OBJECT:", getattr(p, "__dict__", p))
+            # print("URL:", url)
+            # print("SLUG:", slug)
+            # print("TITLE:", title)
 
-        analysis, model, phash = analyze_article(clean)
-        insert_analysis(engine, post_id, analysis, model, phash)
+        except Exception as e:
+            errors += 1
+            print(f"[error] failed processing post {getattr(p, 'url', None)}: {e}")
 
-        analysis, model, phash = analyze_article(clean)
-        insert_analysis(engine, post_id, analysis, model, phash)
+    # ---- Commit 1: materialize + cache author profile after ingestion ----
+    rows = get_author_analyses(engine, author_id)
+    if rows:
+        profile_summary = rows[0].get("summary")
+        beliefs = recurring_claims(rows)
+        topics = aggregate_topics(rows)
+        bias = bias_stats(rows)
 
-        claims = extract_claims(analysis)
-        insert_belief_occurrences(engine, author_id, post_id, published_at, claims)
-        set_post_processed(engine, post_id, checksum)
-        processed += 1
+        upsert_author_profile(
+            engine,
+            author_id=author_id,
+            summary=profile_summary,
+            beliefs=beliefs,
+            topics=topics,
+            bias=bias,
+        )
+
+    return {
+        "author_id": author_id,
+        "posts_seen": len(posts),
+        "processed": processed,
+        "skipped_paywall": skipped_paywall,
+        "skipped_empty": skipped_empty,
+        "skipped_unchanged": skipped_unchanged,
+        "skipped_no_url": skipped_no_url,
+        "errors": errors,
+        "profile_computed": bool(rows),
+    }
 
     # ---- Commit 1: materialize + cache author profile after ingestion ----
     rows = get_author_analyses(engine, author_id)

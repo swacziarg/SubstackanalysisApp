@@ -1,33 +1,14 @@
 from collections import Counter
-import json
-
-
-def _ensure_list(value):
-    """Accept jsonb, json string, or None and normalize to list"""
-    if value is None:
-        return []
-
-    if isinstance(value, list):
-        return value
-
-    if isinstance(value, str):
-        try:
-            return json.loads(value)
-        except Exception:
-            return []
-
-    return []
+from app.utils.json_utils import ensure_list
 
 
 def aggregate_topics(rows):
     counter = Counter()
 
     for r in rows:
-        topics = _ensure_list(r.get("topics"))
-        counter.update(topics)
+        counter.update(ensure_list(r.get("topics")))
 
     return [t for t, _ in counter.most_common(8)]
-
 
 def bias_stats(rows):
     scores = [r["bias_score"] for r in rows if r["bias_score"] is not None]

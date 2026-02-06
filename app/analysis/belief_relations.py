@@ -22,7 +22,6 @@ Belief B:
 {b}
 """
 
-
 def classify_relation(a, b):
     r = client.chat.completions.create(
         model=os.getenv("GROQ_MODEL"),
@@ -30,12 +29,16 @@ def classify_relation(a, b):
         messages=[{"role": "user", "content": PROMPT.format(a=a, b=b)}],
     )
 
-    raw = r.choices[0].message.content
+    raw = r.choices[0].message.content.strip()
+
     try:
-        return json.loads(raw)
+        parsed = json.loads(raw)
+        return {
+            "relation": parsed.get("relation", "UNRELATED"),
+            "confidence": float(parsed.get("confidence", 0.5)),
+        }
     except:
         return {"relation": "UNRELATED", "confidence": 0.5}
-
 
 def build_relations(engine, author_id):
 

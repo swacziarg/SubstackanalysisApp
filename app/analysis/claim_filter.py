@@ -30,7 +30,11 @@ def classify_claim(text: str) -> str:
 
     raw = r.choices[0].message.content.strip()
 
-    # 1) try strict JSON
+    # extract JSON block if wrapped
+    match = re.search(r"\{.*\}", raw, re.DOTALL)
+    if match:
+        raw = match.group(0)
+
     try:
         t = json.loads(raw).get("type")
         if t in VALID:
@@ -38,10 +42,8 @@ def classify_claim(text: str) -> str:
     except:
         pass
 
-    # 2) fallback: regex extraction
     match = re.search(r"(ADVANCED|DISCUSSED|META)", raw)
     if match:
         return match.group(1)
 
-    # 3) final fallback (never None!)
     return "DISCUSSED"
