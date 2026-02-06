@@ -7,20 +7,23 @@ export default function Author() {
   const [posts, setPosts] = useState([]);
 
   useEffect(() => {
-    api.get(`/authors/${id}/posts`).then(res => setPosts(res.data));
+    api.get(`/authors/${id}/posts`).then((res) => setPosts(res.data));
   }, [id]);
 
   return (
     <div style={{ padding: 40 }}>
       <h1>Posts</h1>
 
-      {posts.map(p => (
-        <div key={p.id} style={{
-          border: "1px solid #ddd",
-          padding: 16,
-          marginBottom: 16
-        }}>
-          <Link to={`/post/${p.id}`}>
+      {posts.map((p) => (
+        <div
+          key={p.id}
+          style={{
+            border: "1px solid #ddd",
+            padding: 16,
+            marginBottom: 16,
+          }}
+        >
+          <Link to={`/posts/${p.id}`}>
             <h3>{p.title}</h3>
           </Link>
           <Link to={`/authors/${id}/profile`}>View belief profile</Link>

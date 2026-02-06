@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { api } from "../api";
 import { useParams } from "react-router-dom";
+import DOMPurify from "dompurify";
+import "../article.css";
 
 export default function Post() {
   const { id } = useParams();
@@ -11,25 +13,32 @@ export default function Post() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    api.get(`/posts/${id}`).then(res => setPost(res.data));
+    api.get(`/posts/${id}`).then((res) => setPost(res.data));
   }, [id]);
 
   async function ask() {
     setLoading(true);
-    const res = await api.post(`/posts/${id}/ask?question=${encodeURIComponent(question)}`);
+    const res = await api.post(
+      `/posts/${id}/ask?question=${encodeURIComponent(question)}`
+    );
     setAnswer(res.data);
     setLoading(false);
   }
 
   if (!post) return <div style={{ padding: 40 }}>Loading...</div>;
 
+  const cleanHTML = DOMPurify.sanitize(post.html || "");
+
   return (
     <div style={{ display: "flex", gap: 40, padding: 40 }}>
-
       {/* Article */}
       <div style={{ width: "60%" }}>
-        <h1>{post.title}</h1>
-        <pre style={{ whiteSpace: "pre-wrap" }}>{post.content}</pre>
+        <h1>{post.title || "Untitled"}</h1>
+
+        <div
+          className="article"
+          dangerouslySetInnerHTML={{ __html: cleanHTML }}
+        />
       </div>
 
       {/* AI Panel */}
@@ -38,14 +47,14 @@ export default function Post() {
         <p><b>Main claim:</b> {post.analysis?.main_claim}</p>
         <p><b>Bias:</b> {post.analysis?.bias}</p>
 
-        <hr/>
+        <hr />
 
         <h2>Ask the article</h2>
 
         <input
           style={{ width: "100%", padding: 8 }}
           value={question}
-          onChange={e => setQuestion(e.target.value)}
+          onChange={(e) => setQuestion(e.target.value)}
           placeholder="What does the author believe?"
         />
 

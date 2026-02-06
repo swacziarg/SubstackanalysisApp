@@ -34,6 +34,7 @@ No markdown. No extra keys.
 
 # ---------- JSON extraction ----------
 
+
 def extract_json(text: str) -> dict:
     match = re.search(r"\{.*\}", text, re.DOTALL)
     if not match:
@@ -74,7 +75,7 @@ TEXT:
     resp = _client.chat.completions.create(
         model=MODEL,
         temperature=0,
-        messages=[{"role": "user", "content": repair_prompt}]
+        messages=[{"role": "user", "content": repair_prompt}],
     )
 
     fixed = resp.choices[0].message.content.strip()
@@ -82,6 +83,7 @@ TEXT:
 
 
 # ---------- Stable hash ----------
+
 
 def compute_prompt_hash(payload: str) -> str:
     """
@@ -101,6 +103,7 @@ def compute_prompt_hash(payload: str) -> str:
 
 # ---------- Main analysis ----------
 
+
 def analyze_article(clean_text: str):
     """
     Returns:
@@ -119,8 +122,8 @@ def analyze_article(clean_text: str):
         temperature=0.2,
         messages=[
             {"role": "system", "content": SYSTEM},
-            {"role": "user", "content": payload}
-        ]
+            {"role": "user", "content": payload},
+        ],
     )
 
     content = resp.choices[0].message.content.strip()

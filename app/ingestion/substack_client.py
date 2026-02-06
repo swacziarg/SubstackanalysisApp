@@ -1,5 +1,6 @@
 from substack_api import Newsletter, Post
 
+
 class SubstackClient:
     def __init__(self, newsletter_url: str):
         self.newsletter_url = newsletter_url

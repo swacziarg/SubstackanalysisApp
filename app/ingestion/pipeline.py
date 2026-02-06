@@ -9,6 +9,7 @@ from app.db.queries import (
     upsert_post_content,
     replace_chunks,
     insert_analysis,
+    insert_belief_occurrences,
     set_post_processed,
     get_author_analyses,
     upsert_author_profile,
@@ -18,9 +19,22 @@ from app.ingestion.cleaner import html_to_text
 from app.ingestion.chunker import chunk_text
 from app.ai.embeddings import embed_texts
 from app.ai.groq_analysis import analyze_article
-
+from app.analysis.claim_extractor import extract_claims
 from app.analysis.author_profile import aggregate_topics, bias_stats, recurring_claims
+from bs4 import BeautifulSoup
 
+def extract_title_from_html(html: str, fallback: str | None):
+    soup = BeautifulSoup(html, "html.parser")
+
+    og = soup.find("meta", property="og:title")
+    if og and og.get("content"):
+        return og["content"]
+
+    h1 = soup.find("h1")
+    if h1 and h1.get_text(strip=True):
+        return h1.get_text(strip=True)
+
+    return fallback or "Untitled"
 
 def sha256_text(s: str) -> str:
     return hashlib.sha256(s.encode("utf-8")).hexdigest()
@@ -37,7 +51,9 @@ def ingest_author(engine: Engine, newsletter_url: str, limit_posts: int = 10):
     subdomain = parse_subdomain(newsletter_url)
 
     # Substack API doesn’t always provide author nicely; use subdomain as fallback
-    author_id = upsert_author(engine, subdomain=subdomain, name=subdomain, description=None)
+    author_id = upsert_author(
+        engine, subdomain=subdomain, name=subdomain, description=None
+    )
 
     posts = client.get_posts(limit=limit_posts)
 
@@ -59,9 +75,15 @@ def ingest_author(engine: Engine, newsletter_url: str, limit_posts: int = 10):
         # Normalize published_at
         if isinstance(published_at, str):
             try:
-                published_at = datetime.fromisoformat(published_at.replace("Z", "+00:00"))
+                published_at = datetime.fromisoformat(
+                    published_at.replace("Z", "+00:00")
+                )
             except Exception:
                 published_at = None
+
+        html = client.get_post_html(url)
+
+        title = extract_title_from_html(html, title)
 
         shell = upsert_post_shell(
             engine,
@@ -73,8 +95,6 @@ def ingest_author(engine: Engine, newsletter_url: str, limit_posts: int = 10):
             word_count=None,
         )
         post_id = shell["id"]
-
-        html = client.get_post_html(url)
 
         # Paywalled or unavailable
         if not html or "paywalled" in str(html).lower():
@@ -110,6 +130,11 @@ def ingest_author(engine: Engine, newsletter_url: str, limit_posts: int = 10):
         analysis, model, phash = analyze_article(clean)
         insert_analysis(engine, post_id, analysis, model, phash)
 
+        analysis, model, phash = analyze_article(clean)
+        insert_analysis(engine, post_id, analysis, model, phash)
+
+        claims = extract_claims(analysis)
+        insert_belief_occurrences(engine, author_id, post_id, published_at, claims)
         set_post_processed(engine, post_id, checksum)
         processed += 1
 

@@ -1,4 +1,3 @@
-import os
 from app.db.engine import get_engine
 from app.ingestion.pipeline import ingest_author
 

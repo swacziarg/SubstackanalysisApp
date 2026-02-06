@@ -2,7 +2,7 @@ def author(row):
     return {
         "id": row["id"],
         "name": row["name"],
-        "substack": f"https://{row['subdomain']}.substack.com"
+        "substack": f"https://{row['subdomain']}.substack.com",
     }
 
 
@@ -13,7 +13,7 @@ def post_preview(row):
         "published_at": row["published_at"],
         "summary": row["summary"],
         "bias": row["bias_score"],
-        "confidence": row["confidence"]
+        "confidence": row["confidence"],
     }
 
 
@@ -33,5 +33,5 @@ def post_detail(row):
             "quotes": row["notable_quotes"],
             "topics": row["topics"],
             "entities": row["entities"],
-        }
+        },
     }

@@ -6,14 +6,14 @@ export default function Authors() {
   const [authors, setAuthors] = useState([]);
 
   useEffect(() => {
-    api.get("/authors").then(res => setAuthors(res.data));
+    api.get("/authors").then((res) => setAuthors(res.data));
   }, []);
 
   return (
     <div style={{ padding: 40 }}>
       <h1>Authors</h1>
 
-      {authors.map(a => (
+      {authors.map((a) => (
         <div key={a.id} style={{ marginBottom: 12 }}>
           <Link to={`/authors/${a.id}`}>
             <b>{a.name}</b>

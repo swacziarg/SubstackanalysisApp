@@ -18,5 +18,5 @@ ReactDOM.createRoot(document.getElementById("root")).render(
       <Route path="/posts/:id" element={<Post />} />
       <Route path="/compare" element={<Compare />} />
     </Routes>
-  </BrowserRouter>
+  </BrowserRouter>,
 );
