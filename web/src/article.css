@@ -1,0 +1,27 @@
+.article {
+  font-family: Georgia, serif;
+  line-height: 1.7;
+  font-size: 18px;
+}
+
+.article p {
+  margin: 1em 0;
+}
+
+.article h1, .article h2, .article h3 {
+  margin-top: 1.6em;
+}
+
+.article ul, .article ol {
+  padding-left: 1.5em;
+}
+
+.article blockquote {
+  border-left: 4px solid #ddd;
+  padding-left: 1em;
+  color: #555;
+}
+
+.article img {
+  max-width: 100%;
+}
