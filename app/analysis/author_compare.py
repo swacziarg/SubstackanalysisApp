@@ -105,6 +105,7 @@ def polarity(text):
     score = sum(w in POS for w in words) - sum(w in NEG for w in words)
     return score
 
+
 def disagreement(claims_a, claims_b, sim_threshold=0.78):
     """
     Two claims disagree if:

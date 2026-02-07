@@ -20,9 +20,11 @@
   --focus: #111111;
 
   /* type */
-  --serif: "Source Serif 4", Charter, Georgia, "Iowan Old Style", "Times New Roman",
+  --serif:
+    "Source Serif 4", Charter, Georgia, "Iowan Old Style", "Times New Roman",
     Times, serif;
-  --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+  --mono:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
     "Courier New", monospace;
 
   /* rhythm */

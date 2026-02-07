@@ -57,7 +57,10 @@ export default function Post() {
         <div>
           <div className="h2">Article</div>
           <div className="rule" />
-          <div className="article" dangerouslySetInnerHTML={{ __html: cleanHTML }} />
+          <div
+            className="article"
+            dangerouslySetInnerHTML={{ __html: cleanHTML }}
+          />
         </div>
 
         {/* Right: Interpretation */}
@@ -102,12 +105,17 @@ export default function Post() {
             </button>
           </div>
 
-          {askErr && <div className="meta mt12">Error contacting reasoning engine.</div>}
+          {askErr && (
+            <div className="meta mt12">Error contacting reasoning engine.</div>
+          )}
 
           {answer?.answer && (
             <div className="mt18">
               <div className="h3">Answer</div>
-              <p className="m0" style={{ fontFamily: "var(--mono)", fontSize: "0.95rem" }}>
+              <p
+                className="m0"
+                style={{ fontFamily: "var(--mono)", fontSize: "0.95rem" }}
+              >
                 {answer.answer}
               </p>
             </div>

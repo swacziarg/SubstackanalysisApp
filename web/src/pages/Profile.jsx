@@ -33,17 +33,23 @@ export default function Profile() {
     setMessages((m) => [...m, { role: "question", text }]);
 
     try {
-      const res = await api.post(`/authors/${authorId}/ask`, { question: text });
+      const res = await api.post(`/authors/${authorId}/ask`, {
+        question: text,
+      });
       setMessages((m) => [...m, { role: "answer", text: res.data.answer }]);
     } catch {
-      setMessages((m) => [...m, { role: "answer", text: "The model could not produce an answer." }]);
+      setMessages((m) => [
+        ...m,
+        { role: "answer", text: "The model could not produce an answer." },
+      ]);
     } finally {
       setLoadingAsk(false);
     }
   }
 
   if (data === undefined) return <div className="page">Loading…</div>;
-  if (data === null) return <div className="page">Failed to load worldview.</div>;
+  if (data === null)
+    return <div className="page">Failed to load worldview.</div>;
 
   const suggestions = [
     "What assumptions guide this author's thinking?",
@@ -66,8 +72,9 @@ export default function Profile() {
 
       {/* short explanation */}
       <p className="meta" style={{ maxWidth: "70ch" }}>
-        You are questioning a reasoning model grounded in this author's writings.
-        It answers normally for general knowledge, and uses the author's beliefs when relevant.
+        You are questioning a reasoning model grounded in this author's
+        writings. It answers normally for general knowledge, and uses the
+        author's beliefs when relevant.
       </p>
 
       {/* transcript window */}
@@ -100,7 +107,9 @@ export default function Profile() {
         {messages.map((m, i) => (
           <div key={i} className="msg">
             <div className="who">{m.role === "question" ? "You" : "Model"}</div>
-            <p className={`text ${m.role === "answer" ? "mono" : ""}`}>{m.text}</p>
+            <p className={`text ${m.role === "answer" ? "mono" : ""}`}>
+              {m.text}
+            </p>
           </div>
         ))}
 

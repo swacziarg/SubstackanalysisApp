@@ -4,12 +4,15 @@ from groq import Groq
 _client = Groq(api_key=os.environ["GROQ_API_KEY"])
 MODEL = os.getenv("GROQ_MODEL", "llama-3.1-8b-instant")
 
+
 def identity_prefix(author_name):
     if not author_name:
         return ""
     return f"The following statements belong to the writer: {author_name}.\n"
 
+
 # ---------- 1. classify question ----------
+
 
 def classifier_prompt(author_name: str | None):
     identity = f"The author being discussed is {author_name}.\n" if author_name else ""
@@ -80,9 +83,14 @@ Do not roleplay the author unless asked about them.
 
 # ---------- 3. answer ----------
 
-def answer_question(question: str, statements: list[str], author_name: str | None = None) -> str:    
+
+def answer_question(
+    question: str, statements: list[str], author_name: str | None = None
+) -> str:
     category = classify(question, author_name)
-    context = identity_prefix(author_name) + "\n".join(f"- {s}" for s in statements[:20])
+    context = identity_prefix(author_name) + "\n".join(
+        f"- {s}" for s in statements[:20]
+    )
 
     if category == "A":
         system = AUTHOR_STRICT

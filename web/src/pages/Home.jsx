@@ -14,13 +14,17 @@ export default function Home() {
       <section>
         <h2 className="h2">Mission</h2>
         <p>
-          There is considerable overlap between what people read and what they already know.
+          There is considerable overlap between what people read and what they
+          already know.
         </p>
         <p>
-          This project aims to break that feedback loop by surfacing the beliefs and biases of writers, based on what they actually write.
+          This project aims to break that feedback loop by surfacing the beliefs
+          and biases of writers, based on what they actually write.
         </p>
         <p>
-          The main goal is to help readers find thinkers with different perspectives, and to understand those perspectives in a structured way. 
+          The main goal is to help readers find thinkers with different
+          perspectives, and to understand those perspectives in a structured
+          way.
         </p>
       </section>
 
@@ -38,7 +42,9 @@ export default function Home() {
           </thead>
           <tbody>
             <tr>
-              <td><Link to="/authors">Authors list</Link></td>
+              <td>
+                <Link to="/authors">Authors list</Link>
+              </td>
               <td>Who to read</td>
             </tr>
             <tr>
@@ -68,9 +74,7 @@ export default function Home() {
           <li>Open the worldview summary</li>
         </ol>
 
-        <p className="meta">
-          Conclusions should follow evidence.
-        </p>
+        <p className="meta">Conclusions should follow evidence.</p>
       </section>
 
       <div className="rule" />

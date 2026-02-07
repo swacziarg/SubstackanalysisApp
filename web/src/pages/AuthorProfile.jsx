@@ -33,7 +33,8 @@ export default function AuthorProfile() {
 
       <h1 className="title">Worldview</h1>
       <div className="meta readable">
-        Structured as a research summary: claims, recurring themes, and bias tendencies.
+        Structured as a research summary: claims, recurring themes, and bias
+        tendencies.
       </div>
 
       <div className="rule" />
@@ -78,7 +79,9 @@ export default function AuthorProfile() {
       <section className="readable" aria-label="Bias overview">
         <h2 className="h2">Bias tendencies</h2>
         {data.bias_overview ? (
-          <pre className="pre">{JSON.stringify(data.bias_overview, null, 2)}</pre>
+          <pre className="pre">
+            {JSON.stringify(data.bias_overview, null, 2)}
+          </pre>
         ) : (
           <div className="meta">No bias overview available.</div>
         )}

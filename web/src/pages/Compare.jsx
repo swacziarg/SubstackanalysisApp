@@ -10,7 +10,9 @@ export default function Compare() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    getAuthorsCached().then(setAuthors).catch(() => setErr(true));
+    getAuthorsCached()
+      .then(setAuthors)
+      .catch(() => setErr(true));
   }, []);
 
   const options = useMemo(() => authors || [], [authors]);
@@ -31,13 +33,13 @@ export default function Compare() {
   };
   const authorA = useMemo(
     () => authors.find((x) => String(x.id) === String(a)),
-    [authors, a]
-    );
+    [authors, a],
+  );
 
-    const authorB = useMemo(
+  const authorB = useMemo(
     () => authors.find((x) => String(x.id) === String(b)),
-    [authors, b]
-    );
+    [authors, b],
+  );
   return (
     <div className="page">
       <h1 className="title">Compare Thinkers</h1>
@@ -45,25 +47,37 @@ export default function Compare() {
       <div className="rule" />
 
       <div className="controls">
-        <select className="input" value={a} onChange={(e) => setA(e.target.value)}>
+        <select
+          className="input"
+          value={a}
+          onChange={(e) => setA(e.target.value)}
+        >
           <option value="">Author A</option>
           {options.map((x) => (
-            <option key={x.id} value={x.id}>{x.name}</option>
+            <option key={x.id} value={x.id}>
+              {x.name}
+            </option>
           ))}
         </select>
 
-        <select className="input" value={b} onChange={(e) => setB(e.target.value)}>
+        <select
+          className="input"
+          value={b}
+          onChange={(e) => setB(e.target.value)}
+        >
           <option value="">Author B</option>
           {options.map((x) => (
-            <option key={x.id} value={x.id}>{x.name}</option>
+            <option key={x.id} value={x.id}>
+              {x.name}
+            </option>
           ))}
         </select>
 
         <button
-            className="button"
-            onClick={run}
-            disabled={!a || !b || a === b || loading}
-            >
+          className="button"
+          onClick={run}
+          disabled={!a || !b || a === b || loading}
+        >
           {loading ? "Comparing…" : "Compare"}
         </button>
       </div>
@@ -72,18 +86,18 @@ export default function Compare() {
 
       {result && (
         <>
-            <div className="rule" />
+          <div className="rule" />
 
-            {/* SIDE-BY-SIDE COMPARISON */}
-            <div
+          {/* SIDE-BY-SIDE COMPARISON */}
+          <div
             style={{
-                display: "grid",
-                gridTemplateColumns: "1fr 1fr",
-                columnGap: "3rem",
-                rowGap: "1.2rem",
-                alignItems: "start",
+              display: "grid",
+              gridTemplateColumns: "1fr 1fr",
+              columnGap: "3rem",
+              rowGap: "1.2rem",
+              alignItems: "start",
             }}
-            >
+          >
             {/* header */}
             <div className="h1">{authorA?.name || "Author A"}</div>
             <div className="h1">{authorB?.name || "Author B"}</div>
@@ -93,10 +107,14 @@ export default function Compare() {
             <div className="h3">Primary unique topics</div>
 
             <ul>
-                {(result.unique_a || []).map((t, i) => <li key={i}>{t}</li>)}
+              {(result.unique_a || []).map((t, i) => (
+                <li key={i}>{t}</li>
+              ))}
             </ul>
             <ul>
-                {(result.unique_b || []).map((t, i) => <li key={i}>{t}</li>)}
+              {(result.unique_b || []).map((t, i) => (
+                <li key={i}>{t}</li>
+              ))}
             </ul>
 
             {/* Shared */}
@@ -104,53 +122,57 @@ export default function Compare() {
             <div className="h3">Shared topics</div>
 
             <ul>
-                {(result.shared_topics || []).map((t, i) => <li key={i}>{t}</li>)}
+              {(result.shared_topics || []).map((t, i) => (
+                <li key={i}>{t}</li>
+              ))}
             </ul>
             <ul>
-                {(result.shared_topics || []).map((t, i) => <li key={i}>{t}</li>)}
+              {(result.shared_topics || []).map((t, i) => (
+                <li key={i}>{t}</li>
+              ))}
             </ul>
-            </div>
+          </div>
 
-            <div className="rule" />
+          <div className="rule" />
 
-            {/* DISAGREEMENTS — keep vertical (better for reading arguments) */}
-            <section className="readable">
+          {/* DISAGREEMENTS — keep vertical (better for reading arguments) */}
+          <section className="readable">
             <h2 className="h2">Direct disagreements</h2>
 
             {result.disagreement?.length ? (
-                <ul>
+              <ul>
                 {result.disagreement.map((x, i) => (
-                    <li key={i}>
+                  <li key={i}>
                     <span className="mono">{x.claim_a}</span>
                     {"  ↔  "}
                     <span className="mono">{x.claim_b}</span>
-                    </li>
+                  </li>
                 ))}
-                </ul>
+              </ul>
             ) : (
-                <div className="meta">No explicit contradictions detected.</div>
+              <div className="meta">No explicit contradictions detected.</div>
             )}
-            </section>
+          </section>
 
-            <div className="rule" />
+          <div className="rule" />
 
-            {/* AGREEMENT — summarized last */}
-            <section className="readable">
+          {/* AGREEMENT — summarized last */}
+          <section className="readable">
             <h2 className="h2">Shared beliefs</h2>
             {result.agreement?.length ? (
-                <ul>
+              <ul>
                 {result.agreement.map((x, i) => (
-                    <li key={i}>
+                  <li key={i}>
                     <span className="mono">{x.canonical || x}</span>
-                    </li>
+                  </li>
                 ))}
-                </ul>
+              </ul>
             ) : (
-                <div className="meta">No strong agreement detected.</div>
+              <div className="meta">No strong agreement detected.</div>
             )}
-            </section>
+          </section>
         </>
-        )}
+      )}
     </div>
   );
 }

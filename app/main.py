@@ -20,7 +20,6 @@ from app.ai.embeddings import embed_texts
 from fastapi.middleware.cors import CORSMiddleware
 from app.analysis.backfill_beliefs import backfill_author_beliefs
 from app.db.cached_profiles import upsert_cached_profile
-from app.db.queries import get_author_profile
 
 app = FastAPI()
 
@@ -110,7 +109,9 @@ def read_post(post_id: int):
         raise HTTPException(404)
     return post
 
+
 from app.db.cached_profiles import get_cached_profile
+
 
 @app.get("/authors/{author_id}/profile")
 def author_profile(author_id: int):
@@ -121,6 +122,8 @@ def author_profile(author_id: int):
         return cached
 
     return {"status": "profile_not_computed"}
+
+
 @app.get("/compare")
 def compare(author_a: int, author_b: int):
     engine = get_engine()
@@ -145,10 +148,7 @@ def compare(author_a: int, author_b: int):
 
     # --- normalize disagreements ---
     raw_disagreements = disagreement(claims_a, claims_b)
-    disagreements = [
-        {"claim_a": a, "claim_b": b}
-        for (a, b) in raw_disagreements
-    ]
+    disagreements = [{"claim_a": a, "claim_b": b} for (a, b) in raw_disagreements]
 
     # --- agreement beliefs (text similarity simple intersection) ---
     belief_agreement = []
@@ -195,6 +195,7 @@ def classify_claims():
 
     return classify_missing_claims(engine)
 
+
 @app.post("/admin/build_relations/{author_id}")
 def build_relations_api(author_id: int):
     engine = get_engine()
@@ -215,6 +216,7 @@ def evolution(author_id: int):
     from app.analysis.belief_drift import detect_belief_changes
 
     return detect_belief_changes(engine, author_id)
+
 
 @app.post("/authors/{author_id}/ask")
 def ask_author(author_id: int, payload: Question):

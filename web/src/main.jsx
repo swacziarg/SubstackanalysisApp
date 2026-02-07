@@ -29,7 +29,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
         </Routes>
       </div>
     </BrowserRouter>
-  </React.StrictMode>
+  </React.StrictMode>,
 );
 
 startBackgroundWarm();

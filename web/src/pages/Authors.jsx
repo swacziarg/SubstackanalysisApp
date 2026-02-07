@@ -19,7 +19,6 @@ export default function Authors() {
 
   return (
     <div className="page">
-
       <h1 className="title">Authors list</h1>
 
       <div className="rule" />
