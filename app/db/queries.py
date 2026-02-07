@@ -472,3 +472,13 @@ def get_author_tensions(engine, author_id):
         rows = conn.execute(q, {"a": author_id}).mappings().all()
 
     return [dict(r) for r in rows]
+def get_author_name(engine, author_id: int) -> str | None:
+    from sqlalchemy import text
+
+    with engine.begin() as conn:
+        row = conn.execute(
+            text("select name from authors where id = :id"),
+            {"id": author_id},
+        ).scalar()
+
+    return row

@@ -1,7 +1,5 @@
-// src/pages/Compare.jsx
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
-import { compareAuthors, getAuthorsCached } from "../api";
+import { getAuthorsCached, compareAuthors } from "../api";
 
 export default function Compare() {
   const [authors, setAuthors] = useState([]);
@@ -12,12 +10,10 @@ export default function Compare() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    getAuthorsCached()
-      .then(setAuthors)
-      .catch(() => setErr(true));
+    getAuthorsCached().then(setAuthors).catch(() => setErr(true));
   }, []);
 
-  const authorOptions = useMemo(() => authors || [], [authors]);
+  const options = useMemo(() => authors || [], [authors]);
 
   const run = async () => {
     if (!a || !b) return;
@@ -33,85 +29,128 @@ export default function Compare() {
       setLoading(false);
     }
   };
+  const authorA = useMemo(
+    () => authors.find((x) => String(x.id) === String(a)),
+    [authors, a]
+    );
 
+    const authorB = useMemo(
+    () => authors.find((x) => String(x.id) === String(b)),
+    [authors, b]
+    );
   return (
     <div className="page">
-      <div className="breadcrumbs">
-        <Link to="/">Thinkers</Link>
-        <span className="crumb-sep">›</span>
-        <span>Compare</span>
-      </div>
-
-      <h1 className="title">Compare</h1>
-      <div className="meta readable">
-        One question: how do two thinkers differ? Minimal controls; maximal legibility.
-      </div>
+      <h1 className="title">Compare Thinkers</h1>
 
       <div className="rule" />
 
-      <div className="readable" aria-label="Compare controls">
-        <div className="h3">Select two authors</div>
-        <div className="controls mt8">
-          <select className="input" value={a} onChange={(e) => setA(e.target.value)}>
-            <option value="">Author A</option>
-            {authorOptions.map((x) => (
-              <option key={x.id} value={x.id}>
-                {x.name}
-              </option>
-            ))}
-          </select>
+      <div className="controls">
+        <select className="input" value={a} onChange={(e) => setA(e.target.value)}>
+          <option value="">Author A</option>
+          {options.map((x) => (
+            <option key={x.id} value={x.id}>{x.name}</option>
+          ))}
+        </select>
 
-          <select className="input" value={b} onChange={(e) => setB(e.target.value)}>
-            <option value="">Author B</option>
-            {authorOptions.map((x) => (
-              <option key={x.id} value={x.id}>
-                {x.name}
-              </option>
-            ))}
-          </select>
+        <select className="input" value={b} onChange={(e) => setB(e.target.value)}>
+          <option value="">Author B</option>
+          {options.map((x) => (
+            <option key={x.id} value={x.id}>{x.name}</option>
+          ))}
+        </select>
 
-          <button className="button" onClick={run} disabled={loading || !a || !b}>
-            {loading ? "Comparing…" : "Compare"}
-          </button>
-
-          <button
-            className="linkButton"
-            type="button"
-            onClick={() => {
-              setA("");
-              setB("");
-              setResult(null);
-              setErr(false);
-            }}
-          >
-            Clear
-          </button>
-        </div>
-
-        {err && <div className="meta mt12">Failed to compare authors.</div>}
+        <button
+            className="button"
+            onClick={run}
+            disabled={!a || !b || a === b || loading}
+            >
+          {loading ? "Comparing…" : "Compare"}
+        </button>
       </div>
+
+      {err && <div className="meta mt12">Comparison failed.</div>}
 
       {result && (
         <>
-          <div className="rule" />
-          <div className="readable" aria-label="Comparison result">
-            <h2 className="h2">Agreement</h2>
-            {Array.isArray(result.agreement) && result.agreement.length > 0 ? (
-              <ul>
-                {result.agreement.map((x, i) => (
-                  <li key={i}>
-                    <span style={{ fontFamily: "var(--mono)", fontSize: "0.95rem" }}>
-                      {x.canonical || String(x)}
-                    </span>
-                  </li>
+            <div className="rule" />
+
+            {/* SIDE-BY-SIDE COMPARISON */}
+            <div
+            style={{
+                display: "grid",
+                gridTemplateColumns: "1fr 1fr",
+                columnGap: "3rem",
+                rowGap: "1.2rem",
+                alignItems: "start",
+            }}
+            >
+            {/* header */}
+            <div className="h1">{authorA?.name || "Author A"}</div>
+            <div className="h1">{authorB?.name || "Author B"}</div>
+
+            {/* Topics */}
+            <div className="h3">Primary unique topics</div>
+            <div className="h3">Primary unique topics</div>
+
+            <ul>
+                {(result.unique_a || []).map((t, i) => <li key={i}>{t}</li>)}
+            </ul>
+            <ul>
+                {(result.unique_b || []).map((t, i) => <li key={i}>{t}</li>)}
+            </ul>
+
+            {/* Shared */}
+            <div className="h3">Shared topics</div>
+            <div className="h3">Shared topics</div>
+
+            <ul>
+                {(result.shared_topics || []).map((t, i) => <li key={i}>{t}</li>)}
+            </ul>
+            <ul>
+                {(result.shared_topics || []).map((t, i) => <li key={i}>{t}</li>)}
+            </ul>
+            </div>
+
+            <div className="rule" />
+
+            {/* DISAGREEMENTS — keep vertical (better for reading arguments) */}
+            <section className="readable">
+            <h2 className="h2">Direct disagreements</h2>
+
+            {result.disagreement?.length ? (
+                <ul>
+                {result.disagreement.map((x, i) => (
+                    <li key={i}>
+                    <span className="mono">{x.claim_a}</span>
+                    {"  ↔  "}
+                    <span className="mono">{x.claim_b}</span>
+                    </li>
                 ))}
-              </ul>
+                </ul>
             ) : (
-              <div className="meta">No agreement entries returned.</div>
+                <div className="meta">No explicit contradictions detected.</div>
             )}
-          </div>
+            </section>
+
+            <div className="rule" />
+
+            {/* AGREEMENT — summarized last */}
+            <section className="readable">
+            <h2 className="h2">Shared beliefs</h2>
+            {result.agreement?.length ? (
+                <ul>
+                {result.agreement.map((x, i) => (
+                    <li key={i}>
+                    <span className="mono">{x.canonical || x}</span>
+                    </li>
+                ))}
+                </ul>
+            ) : (
+                <div className="meta">No strong agreement detected.</div>
+            )}
+            </section>
         </>
-      )}
+        )}
     </div>
   );
 }

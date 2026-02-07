@@ -27,7 +27,7 @@ export default function Author() {
   return (
     <div className="page">
       <div className="breadcrumbs">
-        <Link to="/">Thinkers</Link>
+        <Link to="/authors">Authors list</Link>
         <span className="crumb-sep">›</span>
         <span>Author</span>
       </div>
@@ -36,6 +36,9 @@ export default function Author() {
 
       <div className="meta">
         <Link to={`/authors/${id}/profile`}>Worldview summary →</Link>
+      </div>
+      <div className="meta">
+        <Link to={`/authors/${id}/dialogue`}>Dialogue →</Link>
       </div>
 
       <div className="rule" />
@@ -56,7 +59,7 @@ export default function Author() {
             {rows.map((p) => (
               <tr key={p.id}>
                 <td>
-                  <Link to={`/posts/${p.id}`}>{p.title}</Link>
+                  <Link to={`/authors/${id}/posts/${p.id}`}>{p.title}</Link>
                 </td>
                 <td className="small">{String(p.bias)}</td>
                 <td className="small">{p.claim}</td>

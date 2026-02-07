@@ -121,7 +121,6 @@ def author_profile(author_id: int):
         return cached
 
     return {"status": "profile_not_computed"}
-
 @app.get("/compare")
 def compare(author_a: int, author_b: int):
     engine = get_engine()
@@ -136,13 +135,34 @@ def compare(author_a: int, author_b: int):
         compare_topics,
     )
 
-    topics = compare_topics(get_author_topics(rows_a), get_author_topics(rows_b))
+    claims_a = get_author_claims(rows_a)
+    claims_b = get_author_claims(rows_b)
+
+    topic_result = compare_topics(get_author_topics(rows_a), get_author_topics(rows_b))
+
+    # --- normalize agreement topics ---
+    shared_topics = [t["canonical"] for t in topic_result.get("agreement", [])]
+
+    # --- normalize disagreements ---
+    raw_disagreements = disagreement(claims_a, claims_b)
+    disagreements = [
+        {"claim_a": a, "claim_b": b}
+        for (a, b) in raw_disagreements
+    ]
+
+    # --- agreement beliefs (text similarity simple intersection) ---
+    belief_agreement = []
+    for a in claims_a:
+        for b in claims_b:
+            if a.lower() == b.lower():
+                belief_agreement.append({"canonical": a})
 
     return {
-        **topics,
-        "disagreement": disagreement(
-            get_author_claims(rows_a), get_author_claims(rows_b)
-        ),
+        "agreement": belief_agreement,
+        "disagreement": disagreements,
+        "shared_topics": shared_topics,
+        "unique_a": topic_result.get("unique_to_a", []),
+        "unique_b": topic_result.get("unique_to_b", []),
     }
 
 
@@ -196,20 +216,24 @@ def evolution(author_id: int):
 
     return detect_belief_changes(engine, author_id)
 
-
 @app.post("/authors/{author_id}/ask")
-def ask_author(author_id: int, question: str):
+def ask_author(author_id: int, payload: Question):
     engine = get_engine()
 
-    from app.db.queries import get_author_claims
+    from app.db.queries import get_author_beliefs
 
-    claims = get_author_claims(engine, author_id)
+    beliefs = get_author_beliefs(engine, author_id)
 
-    if not claims:
+    if not beliefs:
         return {"answer": "Not enough data about this author yet."}
 
+    # we only want the canonical claim text
+    from app.db.queries import get_author_name
+
+    author_name = get_author_name(engine, author_id)
+    claims = [b["canonical_claim"] for b in beliefs]
     from app.ai.chat import answer_question
 
-    answer = answer_question(question, claims)
+    answer = answer_question(payload.question, claims, author_name)
 
     return {"answer": answer}

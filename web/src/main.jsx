@@ -12,7 +12,7 @@ import Nav from "./components/Nav.jsx";
 import { startBackgroundWarm } from "./preload";
 import "./ui.css";
 import "./index.css";
-
+import Profile from "./pages/Profile.jsx";
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
     <BrowserRouter future={{ v7_startTransition: true }}>
@@ -23,8 +23,9 @@ ReactDOM.createRoot(document.getElementById("root")).render(
           <Route path="/authors" element={<Authors />} />
           <Route path="/authors/:id" element={<Author />} />
           <Route path="/authors/:id/profile" element={<AuthorProfile />} />
-          <Route path="/posts/:id" element={<Post />} />
+          <Route path="/authors/:authorId/posts/:postId" element={<Post />} />
           <Route path="/compare" element={<Compare />} />
+          <Route path="/authors/:authorId/dialogue" element={<Profile />} />
         </Routes>
       </div>
     </BrowserRouter>

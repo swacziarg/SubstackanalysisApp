@@ -161,6 +161,12 @@ textarea:focus-visible {
   margin: 0 0 14px;
 }
 
+.h1 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 26px 0 10px;
+}
+
 .h2 {
   font-size: 1.15rem;
   font-weight: 700;

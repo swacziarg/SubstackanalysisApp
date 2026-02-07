@@ -105,12 +105,34 @@ def polarity(text):
     score = sum(w in POS for w in words) - sum(w in NEG for w in words)
     return score
 
+def disagreement(claims_a, claims_b, sim_threshold=0.78):
+    """
+    Two claims disagree if:
+    - they are about the same proposition (embedding similarity)
+    - but express opposite stance (polarity)
+    """
 
-def disagreement(claims_a, claims_b):
-    out = []
-    for a in claims_a:
-        for b in claims_b:
-            if any(word in b for word in a.split()[:3]):
-                if polarity(a) * polarity(b) < 0:
-                    out.append((a, b))
-    return out[:5]
+    if not claims_a or not claims_b:
+        return []
+
+    a_emb = np.asarray(_model.encode(claims_a))
+    b_emb = np.asarray(_model.encode(claims_b))
+
+    sims = _cosine_matrix(a_emb, b_emb)
+
+    results = []
+
+    for i, a in enumerate(claims_a):
+        for j, b in enumerate(claims_b):
+            sim = sims[i, j]
+
+            if sim < sim_threshold:
+                continue
+
+            if polarity(a) * polarity(b) < 0:
+                results.append((a, b, float(sim)))
+
+    # keep strongest contradictions only
+    results.sort(key=lambda x: x[2], reverse=True)
+
+    return [(a, b) for a, b, _ in results[:6]]

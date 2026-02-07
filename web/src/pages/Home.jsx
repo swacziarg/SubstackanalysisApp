@@ -14,15 +14,13 @@ export default function Home() {
       <section>
         <h2 className="h2">Mission</h2>
         <p>
-          Most writing is skimmed, reacted to, and forgotten.
-          This system exists to slow that down.
+          There is considerable overlap between what people read and what they already know.
         </p>
         <p>
-          Articles are treated as arguments.
-          Authors are treated as belief systems.
+          This project aims to break that feedback loop by surfacing the beliefs and biases of writers, based on what they actually write.
         </p>
         <p>
-          The goal is comprehension, not engagement.
+          The main goal is to help readers find thinkers with different perspectives, and to understand those perspectives in a structured way. 
         </p>
       </section>
 
@@ -40,7 +38,7 @@ export default function Home() {
           </thead>
           <tbody>
             <tr>
-              <td><Link to="/authors">Thinkers</Link></td>
+              <td><Link to="/authors">Authors list</Link></td>
               <td>Who to read</td>
             </tr>
             <tr>
@@ -66,8 +64,8 @@ export default function Home() {
         <ol>
           <li>Choose a thinker</li>
           <li>Scan their posts</li>
-          <li>Read one article with analysis</li>
-          <li>Open the worldview summary last</li>
+          <li>Read articles</li>
+          <li>Open the worldview summary</li>
         </ol>
 
         <p className="meta">
@@ -80,7 +78,7 @@ export default function Home() {
       <section>
         <h2 className="h2">Start</h2>
         <p>
-          <Link to="/authors">Browse thinkers →</Link>
+          <Link to="/authors">Browse authors →</Link>
         </p>
       </section>
     </div>

@@ -24,7 +24,7 @@ export default function AuthorProfile() {
   return (
     <div className="page">
       <div className="breadcrumbs">
-        <Link to="/">Thinkers</Link>
+        <Link to="/authors">Authors list</Link>
         <span className="crumb-sep">›</span>
         <Link to={`/authors/${id}`}>Author</Link>
         <span className="crumb-sep">›</span>

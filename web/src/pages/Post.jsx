@@ -1,4 +1,3 @@
-// src/pages/Post.jsx
 import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import DOMPurify from "dompurify";
@@ -7,16 +6,17 @@ import { peek } from "../store/fetchOnce";
 import "../article.css";
 
 export default function Post() {
-  const { id } = useParams();
-  const [post, setPost] = useState(() => peek(`post:${id}`));
+  const { authorId, postId } = useParams();
+
+  const [post, setPost] = useState(() => peek(`post:${postId}`));
   const [question, setQuestion] = useState("");
   const [answer, setAnswer] = useState(null);
   const [loading, setLoading] = useState(false);
   const [askErr, setAskErr] = useState(false);
 
   useEffect(() => {
-    getPostCached(id).then(setPost);
-  }, [id]);
+    getPostCached(postId).then(setPost);
+  }, [postId]);
 
   const cleanHTML = useMemo(() => {
     return DOMPurify.sanitize(post?.html || "");
@@ -28,7 +28,7 @@ export default function Post() {
     setLoading(true);
     setAnswer(null);
     try {
-      const res = await api.post(`/posts/${id}/ask`, { question });
+      const res = await api.post(`/posts/${postId}/ask`, { question });
       setAnswer(res.data);
     } catch {
       setAskErr(true);
@@ -41,8 +41,11 @@ export default function Post() {
 
   return (
     <div className="page">
+      {/* Breadcrumbs now correct */}
       <div className="breadcrumbs">
-        <Link to="/">Thinkers</Link>
+        <Link to="/authors">Authors list</Link>
+        <span className="crumb-sep">›</span>
+        <Link to={`/authors/${authorId}`}>Author</Link>
         <span className="crumb-sep">›</span>
         <span>Post</span>
       </div>
