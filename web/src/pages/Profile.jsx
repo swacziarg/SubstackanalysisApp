@@ -70,8 +70,6 @@ export default function Profile() {
         It answers normally for general knowledge, and uses the author's beliefs when relevant.
       </p>
 
-      <div className="rule" />
-
       {/* transcript window */}
       <div
         ref={scrollRef}

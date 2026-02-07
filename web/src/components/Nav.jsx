@@ -10,7 +10,7 @@ export default function Nav() {
         <Link className="brand" to="/">Readable Intelligence</Link>
         <span className="sep">·</span>
         <Link to="/authors" aria-current={loc.pathname.startsWith("/authors") ? "page" : undefined}>
-          Thinkers
+          Authors list
         </Link>
         <Link to="/compare" aria-current={loc.pathname.startsWith("/compare") ? "page" : undefined}>
           Compare
