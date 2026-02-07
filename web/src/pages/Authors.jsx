@@ -1,29 +1,53 @@
+// src/pages/Authors.jsx
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { getAuthorsCached } from "../api";
 import { startBackgroundWarm } from "../preload";
+
 export default function Authors() {
   const [authors, setAuthors] = useState([]);
-    useEffect(() => {
-    getAuthorsCached().then((a) => {
+  const [err, setErr] = useState(false);
+
+  useEffect(() => {
+    getAuthorsCached()
+      .then((a) => {
         setAuthors(a);
-        startBackgroundWarm(); // ensures warm even if user lands deep link
-    });
-    }, []);
+        startBackgroundWarm();
+      })
+      .catch(() => setErr(true));
+  }, []);
 
   return (
-    <div style={{ padding: 40 }}>
-      <h1>Authors</h1>
+    <div className="page">
 
-      {authors.map((a) => (
-        <div key={a.id} style={{ marginBottom: 12 }}>
-          <Link to={`/authors/${a.id}`}>
-            <b>{a.name}</b>
-          </Link>
-        </div>
-      ))}
+      <h1 className="title">Thinkers</h1>
 
-      <Link to="/compare">Compare thinkers</Link>
+      <div className="rule" />
+
+      {err && <div className="meta">Failed to load authors.</div>}
+
+      {!err && authors.length === 0 && <div className="meta">Loading…</div>}
+
+      {authors.length > 0 && (
+        <table className="table" aria-label="Authors">
+          <thead>
+            <tr>
+              <th style={{ width: "34ch" }}>Author</th>
+              <th>Source</th>
+            </tr>
+          </thead>
+          <tbody>
+            {authors.map((a) => (
+              <tr key={a.id}>
+                <td>
+                  <Link to={`/authors/${a.id}`}>{a.name}</Link>
+                </td>
+                <td className="small">{a.subdomain}.substack.com</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
     </div>
   );
 }

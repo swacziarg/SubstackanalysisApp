@@ -1,3 +1,4 @@
+//src/preload.js
 import {
   getAuthorsCached,
   getPostsCached,
